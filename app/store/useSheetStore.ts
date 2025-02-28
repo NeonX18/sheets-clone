@@ -9,8 +9,9 @@ type SheetStore = {
   setSelectedCell: (cell: string) => void;
   setCell: (cell: string, value: string) => void;
   setFormula: (cell: string, formula: string) => void;
-  evaluateFormula: (formula: string) => string;
+  evaluateFormula: (cell: string, formula: string) => string;
   getCellValue: (cell: string) => number;
+  recalculateCells: () => void;
 };
 
 export const useSheetStore = create<SheetStore>((set, get) => ({
@@ -27,17 +28,21 @@ export const useSheetStore = create<SheetStore>((set, get) => ({
     })),
 
   setFormula: (cell, formula) =>
-    set((state) => ({
-      formulas: { ...state.formulas, [cell]: formula },
-      cells: { ...state.cells, [cell]: get().evaluateFormula(formula) },
-    })),
+    set((state) => {
+      const newFormulas = { ...state.formulas, [cell]: formula };
+      const newCells = {
+        ...state.cells,
+        [cell]: get().evaluateFormula(cell, formula),
+      };
+      return { formulas: newFormulas, cells: newCells };
+    }),
 
   getCellValue: (cell) => {
     const value = get().cells[cell];
     return value && !isNaN(Number(value)) ? Number(value) : 0;
   },
 
-  evaluateFormula: (formula) => {
+  evaluateFormula: (cell, formula) => {
     if (!formula.startsWith("=")) return formula;
     try {
       const expression = formula.slice(1).trim();
@@ -72,5 +77,17 @@ export const useSheetStore = create<SheetStore>((set, get) => ({
     } catch {
       return "ERROR";
     }
+  },
+
+  recalculateCells: () => {
+    set((state) => {
+      const newCells = { ...state.cells };
+      for (const cell in state.formulas) {
+        if (state.formulas[cell]) {
+          newCells[cell] = get().evaluateFormula(cell, state.formulas[cell]);
+        }
+      }
+      return { cells: newCells };
+    });
   },
 }));
