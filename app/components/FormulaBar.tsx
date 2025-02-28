@@ -24,7 +24,10 @@ const FormulaBar = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && selectedCell && formulas[selectedCell]) {
-      setCell(selectedCell, evaluateFormula(formulas[selectedCell]));
+      setCell(
+        selectedCell,
+        evaluateFormula(selectedCell, formulas[selectedCell])
+      );
     }
   };
 
