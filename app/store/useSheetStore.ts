@@ -47,9 +47,10 @@ export const useSheetStore = create<SheetStore>((set, get) => ({
     try {
       const expression = formula.slice(1).trim();
 
+      // Handling SUM(A1:A3) properly
       const sumMatch = expression.match(/^SUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)$/);
       if (sumMatch) {
-        const [_, startCol, startRow, endCol, endRow] = sumMatch;
+        const [, startCol, startRow, endCol, endRow] = sumMatch;
         const startColumn = startCol.charCodeAt(0) - 65;
         const endColumn = endCol.charCodeAt(0) - 65;
         const startRowNum = parseInt(startRow, 10);
@@ -65,11 +66,12 @@ export const useSheetStore = create<SheetStore>((set, get) => ({
         return String(sum);
       }
 
+      // Replace cell references (e.g., A1, B2) with their numeric values
       const parsedExpression = expression.replace(
         /([A-Z]+)(\d+)/g,
-        (_, col, row) => {
+        (_: string, col: string, row: string) => {
           const key = col + row;
-          return get().getCellValue(key);
+          return String(get().getCellValue(key)); // Convert number to string
         }
       );
 
